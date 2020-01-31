@@ -20,8 +20,12 @@ TEST(Hydrogen, Basic) {
     memset(dk, 0, sizeof dk);
     //hydro_random_buf_deterministic(m, sizeof m, dk);
     DeepState_SymbolizeData(m, m + sizeof m);
+    bool anyNonZero = false;
     for (size_t i = 0; i < sizeof m; i++) {
       LOG(TRACE) << "m[" << i << "] = " << (unsigned char) m[i];
+      if ((unsigned char) m[i] != 0) {
+	anyNonZero = true;
+      }
     }
     hydro_increment(dk, sizeof dk);
     //hydro_random_buf_deterministic(key, sizeof key, dk);
@@ -48,7 +52,7 @@ TEST(Hydrogen, Basic) {
     ASSERT (hydro_secretbox_decrypt(m2, c, hydro_secretbox_HEADERBYTES, 0, ctx, key) == -1) <<
       "DECRYPT HEADERBYTES 0 NOT -1";
     ASSERT (hydro_secretbox_decrypt(m2, c, sizeof c, 1, ctx, key) == -1) << "DECRYPT M2 SIZEEOF 1 NOT -1";
-    //ASSERT (!hydro_equal(m, m2, sizeof m)) << "M EQUALS M2";
+    ASSERT (!anyNonZero || !hydro_equal(m, m2, sizeof m)) << "M EQUALS M2";
     key[0]++;
     ASSERT (hydro_secretbox_decrypt(m2, c, sizeof c, 0, ctx, key) == -1) << "DECRYPT M2 SIZEOF 0 NOT -1";
     key[0]--;
