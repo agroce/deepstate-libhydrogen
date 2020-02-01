@@ -5,7 +5,41 @@ using namespace deepstate;
 
 static const char *ctx = "libtests";
 
-TEST(Hydrogen, Basic) {
+void hydro_kx_keygen_deepstate(hydro_kx_keypair *static_kp, const uint8_t seed[hydro_kx_SEEDBYTES]) {
+    DeepState_SymbolizeData(static_kp->sk, static_kp->sk + hydro_xk_SECRETKEYBYTES);
+    for (size_t i = 0; i < hydro_xk_SECRETKEYBYTES; i++) {
+      LOG(TRACE) << "kx key[" << i << "] = " << (unsigned char) static_kp->sk[i];
+    }
+    if (hydro_x25519_scalarmult_base(static_kp->pk, static_kp->sk) != 0) {
+        abort();
+    }
+}
+
+TEST(Hydrogen, kx_n) {
+    if (hydro_init() != 0) {
+        ASSERT (0) << "hydrogen failed to initialize!";
+    }
+
+    hydro_kx_keypair         server_static_kp;
+    uint8_t                  psk[hydro_kx_PSKBYTES];
+    uint8_t                  packet1[hydro_kx_N_PACKET1BYTES];
+    hydro_kx_session_keypair kp_client;
+    hydro_kx_session_keypair kp_server;
+
+    hydro_kx_keygen_deepstate(&server_static_kp);
+    DeepState_SymbolizeData(psk, psk + sizeof psk);
+    for (size_t i = 0; i < sizeof psk; i++) {
+      LOG(TRACE) << "psk[" << i << "] = " << (unsigned char) psk[i];
+    }
+
+    hydro_kx_n_1(&kp_client, packet1, psk, server_static_kp.pk);
+    hydro_kx_n_2(&kp_server, packet1, psk, &server_static_kp);
+
+    ASSERT (hydro_equal(kp_client.tx, kp_server.rx, hydro_kx_SESSIONKEYBYTES)) << "TX FAILED";
+    ASSERT (hydro_equal(kp_client.rx, kp_server.tx, hydro_kx_SESSIONKEYBYTES)) << "RX FAILED";
+}
+
+TEST(Hydrogen, secretbox) {
     if (hydro_init() != 0) {
         ASSERT (0) << "hydrogen failed to initialize!";
     }
