@@ -5,7 +5,7 @@ using namespace deepstate;
 
 static const char *ctx = "libtests";
 
-void hydro_kx_keygen_deepstate(hydro_kx_keypair *static_kp, const uint8_t seed[hydro_kx_SEEDBYTES]) {
+void hydro_kx_keygen_deepstate(hydro_kx_keypair *static_kp) {
     DeepState_SymbolizeData(static_kp->sk, static_kp->sk + hydro_kx_SECRETKEYBYTES);
     for (size_t i = 0; i < hydro_kx_SECRETKEYBYTES; i++) {
       LOG(TRACE) << "kx key[" << i << "] = " << (unsigned char) static_kp->sk[i];
